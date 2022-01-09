@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Nicolas Maltais
+ * Copyright 2022 Nicolas Maltais
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import com.maltaisn.notes.sync.databinding.FragmentEditBinding
 import com.maltaisn.notes.ui.SharedViewModel
 import com.maltaisn.notes.ui.common.ConfirmDialog
 import com.maltaisn.notes.ui.edit.adapter.EditAdapter
+import com.maltaisn.notes.ui.edit.undo.UndoManager
 import com.maltaisn.notes.ui.navGraphViewModel
 import com.maltaisn.notes.ui.observeEvent
 import com.maltaisn.notes.ui.startSharingData
@@ -160,6 +161,7 @@ class EditFragment : Fragment(), Toolbar.OnMenuItemClickListener, ConfirmDialog.
         viewModel.noteStatus.observe(viewLifecycleOwner, ::updateItemsForNoteStatus)
         viewModel.notePinned.observe(viewLifecycleOwner, ::updateItemsForPinnedStatus)
         viewModel.noteReminder.observe(viewLifecycleOwner, ::updateItemsForStatusAndReminder)
+        viewModel.undoStatus.observe(viewLifecycleOwner, ::updateItemsForUndoStatus)
         viewModel.noteType.observe(viewLifecycleOwner, ::updateItemsForNoteType)
         viewModel.noteType.asFlow().combine(viewModel.noteStatus.asFlow()) { type, status -> status to type }
             .asLiveData().observe(viewLifecycleOwner, ::updateItemsForStatusAndType)
@@ -300,6 +302,12 @@ class EditFragment : Fragment(), Toolbar.OnMenuItemClickListener, ConfirmDialog.
         menu.findItem(R.id.item_delete_checked).isVisible = isEditableList
     }
 
+    private fun updateItemsForUndoStatus(status: UndoManager.Status) {
+        val menu = binding.toolbar.menu
+        menu.findItem(R.id.item_undo).isEnabled = status.canUndo
+        menu.findItem(R.id.item_redo).isEnabled = status.canRedo
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -312,6 +320,8 @@ class EditFragment : Fragment(), Toolbar.OnMenuItemClickListener, ConfirmDialog.
 
     override fun onMenuItemClick(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.item_undo -> viewModel.undo()
+            R.id.item_redo -> viewModel.redo()
             R.id.item_type -> viewModel.toggleNoteType()
             R.id.item_move -> viewModel.moveNoteAndExit()
             R.id.item_pin -> viewModel.togglePin()

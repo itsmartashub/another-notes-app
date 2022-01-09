@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Copyright 2021 Nicolas Maltais
+  Copyright 2022 Nicolas Maltais
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@
     <string name="action_ok">OK</string>
     <string name="action_pin">Épingler</string>
     <string name="action_postpone">Reporter</string>
+    <string name="action_redo">Rétablir</string>
     <string name="action_reminder_add">Ajouter un rappel</string>
     <string name="action_reminder_edit">Modifier le rappel</string>
     <string name="action_rename">Renommer</string>

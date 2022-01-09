@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Nicolas Maltais
+ * Copyright 2022 Nicolas Maltais
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,6 @@ import android.widget.EditText
 import androidx.core.text.getSpans
 import androidx.core.text.util.LinkifyCompat
 import androidx.core.view.isInvisible
-import androidx.core.widget.addTextChangedListener
-import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.maltaisn.notes.hideKeyboard
@@ -48,6 +46,8 @@ import com.maltaisn.notes.sync.databinding.ItemEditItemBinding
 import com.maltaisn.notes.sync.databinding.ItemEditLabelsBinding
 import com.maltaisn.notes.sync.databinding.ItemEditTitleBinding
 import com.maltaisn.notes.ui.edit.BulletTextWatcher
+import com.maltaisn.notes.ui.edit.undo.TextUndoAction
+import com.maltaisn.notes.ui.edit.undo.TextUndoActionType
 import com.maltaisn.notes.utils.RelativeDateFormatter
 import java.text.DateFormat
 
@@ -80,16 +80,34 @@ class EditTitleViewHolder(binding: ItemEditTitleBinding, callback: EditAdapter.C
     private val titleEdt = binding.titleEdt
     private var item: EditTitleItem? = null
 
+    private var ignoreChanges = false
+
     init {
         titleEdt.setOnClickListener {
             callback.onNoteClickedToEdit()
         }
         titleEdt.addTextChangedListener(clearSpansTextWatcher)
-        titleEdt.doAfterTextChanged { editable ->
-            if (editable != item?.title?.text) {
-                item?.title = AndroidEditableText(editable ?: return@doAfterTextChanged)
+        titleEdt.addTextChangedListener(object : TextWatcher {
+            private var oldText: String = ""
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                oldText = s?.substring(start, start + count).orEmpty()
             }
-        }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (!ignoreChanges) {
+                    callback.onTextChanged(TextUndoAction(bindingAdapterPosition, TextUndoActionType.TITLE,
+                        start, start + before, oldText, s?.substring(start, start + count) ?: ""))
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+                // If editable has changed vs model, update model.
+                if (s != item?.text?.text) {
+                    item?.text = AndroidEditableText(s ?: return)
+                }
+            }
+        })
         titleEdt.addOnAttachStateChangeListener(PrepareCursorControllersListener())
         titleEdt.setHorizontallyScrolling(false)
         titleEdt.maxLines = Integer.MAX_VALUE
@@ -99,7 +117,9 @@ class EditTitleViewHolder(binding: ItemEditTitleBinding, callback: EditAdapter.C
         this.item = item
         titleEdt.isFocusable = item.editable
         titleEdt.isFocusableInTouchMode = item.editable
-        titleEdt.setText(item.title.text)
+        ignoreChanges = true
+        titleEdt.setText(item.text.text)
+        ignoreChanges = false
     }
 
     override fun setFocus(pos: Int) {
@@ -115,19 +135,37 @@ class EditContentViewHolder(binding: ItemEditContentBinding, callback: EditAdapt
     private val contentEdt = binding.contentEdt
     private var item: EditContentItem? = null
 
+    private var ignoreChanges = false
+
     init {
         contentEdt.addTextChangedListener(BulletTextWatcher())
         contentEdt.addTextChangedListener(clearSpansTextWatcher)
         contentEdt.movementMethod = LinkMovementMethod.getInstance()  // Clickable links
-        contentEdt.doAfterTextChanged { editable ->
-            // Add new links
-            LinkifyCompat.addLinks(editable ?: return@doAfterTextChanged,
-                Linkify.WEB_URLS or Linkify.EMAIL_ADDRESSES)
+        contentEdt.addTextChangedListener(object : TextWatcher {
+            private var oldText: String = ""
 
-            if (editable != item?.content?.text) {
-                item?.content = AndroidEditableText(editable)
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                oldText = s?.substring(start, start + count).orEmpty()
             }
-        }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (!ignoreChanges) {
+                    callback.onTextChanged(TextUndoAction(bindingAdapterPosition, TextUndoActionType.CONTENT,
+                        start, start + before, oldText, s?.substring(start, start + count) ?: ""))
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+                // Add new links
+                LinkifyCompat.addLinks(s ?: return, Linkify.WEB_URLS or Linkify.EMAIL_ADDRESSES)
+
+                // If editable has changed vs model, update model.
+                if (s != item?.text?.text) {
+                    item?.text = AndroidEditableText(s)
+                }
+
+            }
+        })
 
         contentEdt.setOnClickListener {
             callback.onNoteClickedToEdit()
@@ -142,7 +180,9 @@ class EditContentViewHolder(binding: ItemEditContentBinding, callback: EditAdapt
         this.item = item
         contentEdt.isFocusable = item.editable
         contentEdt.isFocusableInTouchMode = item.editable
-        contentEdt.setText(item.content.text)
+        ignoreChanges = true
+        contentEdt.setText(item.text.text)
+        ignoreChanges = false
     }
 
     override fun setFocus(pos: Int) {
@@ -161,6 +201,8 @@ class EditItemViewHolder(binding: ItemEditItemBinding, callback: EditAdapter.Cal
     private val deleteImv = binding.deleteImv
 
     private var item: EditItemItem? = null
+
+    private var ignoreChanges = false
 
     val isChecked: Boolean
         get() = itemCheck.isChecked
@@ -181,11 +223,17 @@ class EditItemViewHolder(binding: ItemEditItemBinding, callback: EditAdapter.Cal
 
         itemEdt.addTextChangedListener(clearSpansTextWatcher)
 
-        itemEdt.addTextChangedListener(
-            beforeTextChanged = { _, _, _, _ -> },
-            onTextChanged = { _, _, _, count ->
-                if (itemEdt.text != item?.content?.text) {
-                    item?.content = AndroidEditableText(itemEdt.text)
+        itemEdt.addTextChangedListener(object : TextWatcher {
+            private var oldText: String = ""
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                oldText = s?.substring(start, start + count).orEmpty()
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (!ignoreChanges) {
+                    callback.onTextChanged(TextUndoAction(bindingAdapterPosition, TextUndoActionType.LIST_ITEM,
+                        start, start + before, oldText, s?.substring(start, start + count) ?: ""))
                 }
 
                 // This is used to detect when user enters line breaks into the input, so the
@@ -196,12 +244,20 @@ class EditItemViewHolder(binding: ItemEditItemBinding, callback: EditAdapter.Cal
                 if (pos != RecyclerView.NO_POSITION) {
                     callback.onNoteItemChanged(pos, count > 1)
                 }
-            },
-            afterTextChanged = { editable ->
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+                if (s == null) return
+
                 // Add new links
-                LinkifyCompat.addLinks(editable ?: return@addTextChangedListener,
-                    Linkify.WEB_URLS or Linkify.EMAIL_ADDRESSES)
-            })
+                LinkifyCompat.addLinks(s, Linkify.WEB_URLS or Linkify.EMAIL_ADDRESSES)
+
+                // If editable has changed vs model, update model.
+                if (s != item?.text?.text) {
+                    item?.text = AndroidEditableText(s)
+                }
+            }
+        })
         itemEdt.movementMethod = LinkMovementMethod.getInstance()  // Clickable links
         itemEdt.setOnFocusChangeListener { _, hasFocus ->
             // Only show delete icon for currently focused item.
@@ -237,8 +293,10 @@ class EditItemViewHolder(binding: ItemEditItemBinding, callback: EditAdapter.Cal
 
         itemEdt.isFocusable = item.editable
         itemEdt.isFocusableInTouchMode = item.editable
-        itemEdt.setText(item.content.text)
         itemEdt.isActivated = !item.checked
+        ignoreChanges = true
+        itemEdt.setText(item.text.text)
+        ignoreChanges = false
 
         itemCheck.isChecked = item.checked
         itemCheck.isEnabled = item.editable
@@ -326,6 +384,10 @@ private class AndroidEditableText(override val text: Editable) : EditableText {
 
     override fun append(text: CharSequence) {
         this.text.append(text)
+    }
+
+    override fun replace(start: Int, end: Int, text: CharSequence) {
+        this.text.replace(start, end, text)
     }
 
     override fun replaceAll(text: CharSequence) {
