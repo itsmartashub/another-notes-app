@@ -30,12 +30,15 @@
     </style>
 
     <style name="NoteListItemCardStyle">
-        <item name="cardBackgroundColor">?colorSurface</item>
+<!--        <item name="cardBackgroundColor">?colorSurface</item>-->
+        <item name="cardBackgroundColor">?colorSecondaryContainer</item>
         <item name="android:foreground">?selectableItemBackground</item>
-        <item name="cornerRadius">10dp</item>
+<!--        <item name="cornerRadius">10dp</item>-->
+<!--        <item name="cornerSize">18dp</item>-->
+        <item name="shapeAppearance">?attr/shapeAppearanceCornerLarge</item>
         <item name="strokeColor">@color/color_note_card_stroke</item>
-        <item name="strokeWidth">2dp</item>
-        <item name="cardElevation">2dp</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="cardElevation">0dp</item>
         <item name="android:checkable">true</item>
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
