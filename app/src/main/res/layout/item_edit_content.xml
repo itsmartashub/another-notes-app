@@ -30,8 +30,11 @@
     android:importantForAutofill="no"
     android:textDirection="anyRtl"
     android:inputType="textMultiLine|textLongMessage|textCapSentences|textAutoCorrect"
-    android:textAppearance="?textAppearanceBody1"
-    android:textSize="15sp"
+    style="@style/ItemEditNoteBodyText"
     android:linksClickable="true"
     app:autoLink="true"
     />
+<!--    android:textSize="15sp"
+        android:textAppearance="?textAppearanceBody1"
+-->
+

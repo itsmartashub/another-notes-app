@@ -32,4 +32,7 @@
     <!-- Minimum screen height to show title for dialogs with a text input. -->
     <dimen name="input_dialog_title_min_height">420dp</dimen>
 
+<!--    <dimen name="item_edit_note_body_text_line_height">40sp</dimen>-->
+
+
 </resources>
