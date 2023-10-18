@@ -31,11 +31,12 @@
 
     <style name="NoteListItemCardStyle">
 <!--        <item name="cardBackgroundColor">?colorSurface</item>-->
-        <item name="cardBackgroundColor">?colorSecondaryContainer</item>
+<!--        <item name="cardBackgroundColor">?colorSecondaryContainer</item>-->
+        <item name="cardBackgroundColor">?colorSurfaceContainer</item>
         <item name="android:foreground">?selectableItemBackground</item>
 <!--        <item name="cornerRadius">10dp</item>-->
 <!--        <item name="cornerSize">18dp</item>-->
-        <item name="shapeAppearance">?attr/shapeAppearanceCornerLarge</item>
+        <item name="shapeAppearance">?shapeAppearanceCornerExtraLarge</item>
         <item name="strokeColor">@color/color_note_card_stroke</item>
         <item name="strokeWidth">0dp</item>
         <item name="cardElevation">0dp</item>
@@ -78,7 +79,8 @@
         <item name="rippleColor">@android:color/transparent</item>
         <item name="android:textAppearance">?textAppearanceCaption</item>
         <item name="android:ellipsize">end</item>
-        <item name="chipBackgroundColor">@null</item>
+<!--        <item name="chipBackgroundColor">@null</item>-->
+        <item name="chipBackgroundColor">@android:color/transparent</item>
         <item name="chipMinHeight">28dp</item>
         <item name="chipStrokeColor">@color/material_on_surface_emphasis_medium</item>
         <item name="chipStrokeWidth">0.7dp</item>
