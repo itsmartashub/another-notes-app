@@ -171,4 +171,13 @@
         <item name="animationMode">slide</item>
     </style>
 
+
+<!-- MINE -->
+    <style name="ItemEditNoteBodyText" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:textSize">16.5sp</item>
+        <!--        <item name="android:lineHeight" tools:ignore="NewApi">@dimen/item_edit_note_body_text_line_height</item>-->
+        <!-- lineHeight ne funkcionise -->
+        <item name="android:lineHeight" tools:ignore="NewApi">32sp</item>
+    </style>
+
 </resources>
